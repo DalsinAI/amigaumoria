@@ -174,6 +174,9 @@ int printw(const char *fmt, ...);
 #define getmaxy(w)        ((w)->maxy)
 #define getmaxx(w)        ((w)->maxx)
 
+/* stdscr's calls: macros in C; in C++ functions, since names such as
+ * move and clear are also the C++ library's */
+#ifndef __cplusplus
 #define move(y, x)          wmove(stdscr, (y), (x))
 #define addch(c)            waddch(stdscr, (c))
 #define addstr(s)           waddstr(stdscr, (s))
@@ -196,6 +199,31 @@ int printw(const char *fmt, ...);
 #define inch()              winch(stdscr)
 #define hline(c, n)         whline(stdscr, (c), (n))
 #define vline(c, n)         wvline(stdscr, (c), (n))
+
+#else
+static inline int move(int y, int x) { return wmove(stdscr, y, x); }
+static inline int addch(chtype c) { return waddch(stdscr, c); }
+static inline int addstr(const char *s) { return waddstr(stdscr, s); }
+static inline int addnstr(const char *s, int n) { return waddnstr(stdscr, s, n); }
+static inline int mvaddch(int y, int x, chtype c) { return mvwaddch(stdscr, y, x, c); }
+static inline int mvaddstr(int y, int x, const char *s) { return mvwaddstr(stdscr, y, x, s); }
+static inline int mvaddnstr(int y, int x, const char *s, int n) { return mvwaddnstr(stdscr, y, x, s, n); }
+static inline int clrtoeol(void) { return wclrtoeol(stdscr); }
+static inline int clrtobot(void) { return wclrtobot(stdscr); }
+static inline int erase(void) { return werase(stdscr); }
+static inline int clear(void) { return wclear(stdscr); }
+static inline int refresh(void) { return wrefresh(stdscr); }
+static inline int getch(void) { return wgetch(stdscr); }
+static inline void timeout(int d) { wtimeout(stdscr, d); }
+static inline int attron(int a) { return wattron(stdscr, a); }
+static inline int attroff(int a) { return wattroff(stdscr, a); }
+static inline int attrset(int a) { return wattrset(stdscr, a); }
+static inline int standout(void) { return wstandout(stdscr); }
+static inline int standend(void) { return wstandend(stdscr); }
+static inline chtype inch(void) { return winch(stdscr); }
+static inline int hline(chtype c, int n) { return whline(stdscr, c, n); }
+static inline int vline(chtype c, int n) { return wvline(stdscr, c, n); }
+#endif
 
 #ifdef __cplusplus
 }

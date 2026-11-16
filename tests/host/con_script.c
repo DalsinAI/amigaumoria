@@ -4,12 +4,18 @@
  * what the screen shows when the keys have run out is written to the file
  * CON_SCREEN names. The keys are typed as a player waiting for the game
  * would type them: a read that does not wait (a check for a key typed
- * ahead) finds none, except within a key's CSI sequence. The screen is kept by the same small CSI emulator as the curses
+ * ahead) finds none, except within a key's CSI sequence. For a game that
+ * never waits for a key (it reads with a timeout, to go on by itself),
+ * CON_POLL=1 gives the keys to every read, and CON_IDLE=N ends the run
+ * once the keys have run out and N more reads have found none: the screen
+ * is written then and the program exits; those reads wait as long as
+ * they were asked to, so the game's clock goes on. The screen is kept by the same small CSI emulator as the curses
  * test (con_test.c). Copyright (c) 2026 AmiCradle Team. MIT. */
 #include "con.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 extern char tscr[24][81];
 void con_test_keys(const char *k);
@@ -54,13 +60,21 @@ void con_sleep(int ms) { (void)ms; }
 void con_write(const char *s, int n) { con_test_write(s, n); }
 int con_read(int ms)
 {
-	static int in_seq, after_esc;
+	static int in_seq, after_esc, idle;
+	const char *poll = getenv("CON_POLL"), *lim = getenv("CON_IDLE");
 	int c;
-	if (ms >= 0 && !in_seq)
+	if (ms >= 0 && !in_seq && !(poll && *poll == '1'))
 		return CON_TIMEOUT;
 	c = con_test_read(-1);
 	if (c == CON_EOF) {
-		dump();
+		if (lim && ++idle >= atoi(lim)) {
+			dump();
+			exit(0);
+		}
+		if (!lim)
+			dump();
+		else if (ms > 0)
+			usleep((useconds_t)ms * 1000);	/* the game's time goes by */
 		return ms >= 0 ? CON_TIMEOUT : c;
 	}
 	if (c == 0x9b || c == 0x1b) {

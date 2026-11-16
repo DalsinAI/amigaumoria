@@ -1,0 +1,87 @@
+# Umoria for GFOS (AmigaOS 3.2 with GFOpenUp), 68040/68060: a console game,
+# built soft float with the stove's fpuauto (the FPU is used when the Amiga
+# has one).
+#
+#   make -f amiga/Makefile.amigaos -j4 UM=/path/to/umoria [STOVE=...]
+#
+# UM is upstream at the commit package/umoria.lock names, with
+# amiga/patches applied (package/build-amiga.sh does both). STOVE is a
+# GFOpenAmigaGCC 16.2.0-open6 stove (prefix/ has the compilers and the
+# NDK). Upstream draws with curses: amiga/curses is a small curses on the
+# Amiga console (its own window, raw mode, CSI sequences), and
+# amiga/amiga_start.cpp starts the game in its drawer.
+#
+# Output: build/amigaos/Umoria/ (the drawer: Umoria, data/ with the help
+# and the screens, LICENSE, which the game shows, ReadMe, User/, with
+# GlowIcons), build/amigaos/Umoria.info and Install-Umoria beside them.
+
+UM      ?= ../umoria
+STOVE   ?= $(HOME)/AmiCradle/stoves/os32-gcc16-open6
+PREFIX  ?= $(STOVE)/prefix
+CC      = $(PREFIX)/bin/m68k-amigaos-gcc
+CXX     = $(PREFIX)/bin/m68k-amigaos-g++
+CPU     ?= -m68040 -msoft-float
+# -fno-tree-loop-distribute-patterns: GCC 16's loop miscompile.
+OPT     ?= -Os -fomit-frame-pointer -fno-tree-loop-distribute-patterns
+UM_VERSION ?= 5.7.15
+UM_DATE ?= 2021-06-02
+
+INC      = -Iamiga/curses
+CFLAGS   = -noixemul $(OPT) $(CPU) -std=gnu99 $(INC) -Wall
+CXXFLAGS = -noixemul $(OPT) $(CPU) -std=gnu++14 -D__amigaos__ $(INC) \
+           -Wno-format-overflow -Wno-format-truncation
+LDFLAGS  = -noixemul $(CPU)
+
+BUILD   = build/amigaos
+OBJDIR  = $(BUILD)/obj
+OUT     = $(BUILD)/Umoria
+PROG    = Umoria
+
+UPSTREAM = $(basename $(notdir $(wildcard $(UM)/src/*.cpp)))
+OBJS    = $(UPSTREAM:%=$(OBJDIR)/um/%.o) $(OBJDIR)/amiga_start.o \
+          $(OBJDIR)/curses.o $(OBJDIR)/con_amiga.o
+
+all: $(OUT)/$(PROG) package
+
+$(OUT)/$(PROG): $(OBJS)
+	@mkdir -p $(OUT)
+	$(CXX) $(LDFLAGS) -o $@ $(OBJS)
+
+# upstream's main() is umoria_main: amiga/amiga_start.cpp runs first
+$(OBJDIR)/um/%.o: $(UM)/src/%.cpp $(wildcard $(UM)/src/*.h) amiga/curses/curses.h
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -Dmain=umoria_main -c -o $@ $<
+
+$(OBJDIR)/amiga_start.o: amiga/amiga_start.cpp amiga/curses/curses.h
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -Wall -c -o $@ $<
+
+$(OBJDIR)/%.o: amiga/curses/%.c $(wildcard amiga/curses/*.h)
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+package: $(OUT)/$(PROG) AMIGA_PORT.md amiga/Licences.txt
+	mkdir -p $(OUT)/User $(OUT)/data
+	cp $(UM)/data/*.txt $(OUT)/data/
+	for f in splash versions; do \
+	    sed 's/$${umoria_version}/$(UM_VERSION)/; s/$${current_date}/$(UM_DATE)/' \
+	        $(UM)/data/$$f.txt.in > $(OUT)/data/$$f.txt; done
+	cp $(UM)/LICENSE $(OUT)/LICENSE
+	cp AMIGA_PORT.md $(OUT)/ReadMe
+	cp $(UM)/README.md $(OUT)/ReadMe-Umoria
+	cp $(UM)/AUTHORS $(OUT)/AUTHORS
+	cp amiga/Licences.txt $(OUT)/Licences.txt
+	cp amiga/icons/Umoria.info amiga/icons/ReadMe.info $(OUT)/
+	for f in ReadMe-Umoria LICENSE AUTHORS Licences.txt; do \
+	    cp amiga/icons/ReadMe.info $(OUT)/$$f.info; done
+	cp amiga/icons/Data.info $(OUT)/User.info
+	cp amiga/icons/Data.info $(OUT)/data.info
+	cp amiga/icons/Umoria-drawer.info $(BUILD)/Umoria.info
+	cp amiga/Install-Umoria amiga/Install-Umoria.info $(BUILD)/
+
+objs: $(OBJS)
+
+clean:
+	rm -rf build/amigaos
+
+.PHONY: all package objs clean

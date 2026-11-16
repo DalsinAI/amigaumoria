@@ -1,0 +1,15 @@
+Umoria: licences
+================
+
+The game: Umoria, Robert A. Koeneke's Moria (1981-86) as James E. Wilson
+wrote it in C (1987-94), kept by Michael R. Cook and others,
+https://github.com/dungeons-of-moria/umoria.
+
+- The program, the help and the screens (data/) are under the GNU General
+  Public Licence, version 3 or later (LICENSE). AUTHORS names the authors.
+- The Amiga port's own files: amiga/amiga_start.cpp and amiga/patches are
+  under the GNU GPL version 3 or later, like the game; amiga/curses (the
+  console curses), tests/, package/ and tools/ are MIT. The GlowIcon art is
+  The AmiCradle Team's own.
+- The source the program is built from: upstream at the commit named in
+  ReadMe, with this repository's amiga/patches.

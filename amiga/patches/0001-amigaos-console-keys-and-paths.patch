@@ -1,0 +1,144 @@
+diff --git a/src/config.cpp b/src/config.cpp
+index 77bf9b1..9c2e511 100644
+--- a/src/config.cpp
++++ b/src/config.cpp
+@@ -20,8 +20,17 @@ namespace config {
+         const std::string help_roguelike_wizard = "data/rl_help_wizard.txt";
+         const std::string death_tomb = "data/death_tomb.txt";
+         const std::string death_royal = "data/death_royal.txt";
++#ifdef __amigaos__
++        // the player's own drawer (amiga/amiga_start.cpp)
++        const std::string scores = "User/scores.dat";
++#else
+         const std::string scores = "scores.dat";
++#endif
++#ifdef __amigaos__
++        std::string save_game = "User/game.sav";
++#else
+         std::string save_game = "game.sav";
++#endif
+     } // namespace files
+ 
+     // Game options as set on startup and with `=` set options command -CJS-
+diff --git a/src/curses.h b/src/curses.h
+index 89ff6d8..07a4a4f 100644
+--- a/src/curses.h
++++ b/src/curses.h
+@@ -19,7 +19,7 @@
+   #else
+     #include <ncurses/ncurses.h>
+   #endif
+-#elif __NetBSD__
++#elif __NetBSD__ || defined(__amigaos__)
+   #include <curses.h>
+ #else
+   #include <ncurses.h>
+diff --git a/src/headers.h b/src/headers.h
+index d681dc2..0442dbb 100644
+--- a/src/headers.h
++++ b/src/headers.h
+@@ -18,6 +18,11 @@
+     #include <io.h>
+     #include <sys/types.h>
+ 
++#elif defined(__amigaos__)
++
++    #include <climits>
++    #include <unistd.h>
++
+ #elif __APPLE__ ||  __linux__ || __NetBSD__ || __MORPHOS__
+ 
+     #include <pwd.h>
+diff --git a/src/helpers.cpp b/src/helpers.cpp
+index 651f9d1..e2e23b2 100644
+--- a/src/helpers.cpp
++++ b/src/helpers.cpp
+@@ -158,7 +158,7 @@ void humanDateString(char *day) {
+     time_t now = time(nullptr);
+     struct tm *datetime = localtime(&now);
+ 
+-#ifdef _WIN32
++#if defined(_WIN32) || defined(__amigaos__)
+     strftime(day, 11, "%a %b %d", datetime);
+ #else
+     strftime(day, 11, "%a %b %e", datetime);
+diff --git a/src/ui.h b/src/ui.h
+index 232815f..3e1ba6d 100644
+--- a/src/ui.h
++++ b/src/ui.h
+@@ -83,7 +83,7 @@ bool checkForNonBlockingKeyPress(int microseconds);
+ void getDefaultPlayerName(char *buffer);
+ bool checkFilePermissions();
+ 
+-#ifndef _WIN32
++#if !defined(_WIN32) && !defined(__amigaos__)
+ // call functions which expand tilde before calling open/fopen
+ #define open topen
+ #define fopen tfopen
+diff --git a/src/ui_io.cpp b/src/ui_io.cpp
+index ef54b67..6ac39cb 100644
+--- a/src/ui_io.cpp
++++ b/src/ui_io.cpp
+@@ -93,7 +93,11 @@ ssize_t terminalBellSound() {
+ 
+     // The player can turn off beeps if they find them annoying.
+     if (config::options::error_beep_sound) {
++#ifdef __amigaos__
++        return beep() == OK ? 1 : -1;
++#else
+         return write(1, "\007", 1);
++#endif
+     }
+ 
+     return 0;
+@@ -333,6 +337,9 @@ char getKeyInput() {
+     game.command_count = 0; // Just to be safe -CJS-
+ 
+     while (true) {
++#ifdef __amigaos__
++        curses_arrow_keys = config::options::use_roguelike_keys ? "kjlh" : "8264";
++#endif
+         int ch = getch();
+ 
+         // some machines may not sign extend.
+@@ -521,7 +528,7 @@ void waitForContinueKey(int line_number) {
+ // a certain point, sleep for a second. There would need to be a way of resetting
+ // the count, with a call made for commands like run or rest.
+ bool checkForNonBlockingKeyPress(int microseconds) {
+-#ifdef _WIN32
++#if defined(_WIN32) || defined(__amigaos__)
+     (void) microseconds;
+ 
+     // Ugly non-blocking read...Ugh! -MRC-
+@@ -560,7 +567,12 @@ void getDefaultPlayerName(char *buffer) {
+     // Gotta have some name
+     const char *default_name = "X";
+ 
+-#ifdef _WIN32
++#if defined(__amigaos__)
++    const char *user = getenv("USER");
++
++    (void) strncpy(buffer, user != nullptr && user[0] != 0 ? user : default_name, PLAYER_NAME_SIZE - 1);
++    buffer[PLAYER_NAME_SIZE - 1] = 0;
++#elif defined(_WIN32)
+     unsigned long bufCharCount = PLAYER_NAME_SIZE;
+ 
+     if (!GetUserName(buffer, &bufCharCount)) {
+@@ -584,7 +596,7 @@ void getDefaultPlayerName(char *buffer) {
+ #endif
+ }
+ 
+-#ifndef _WIN32
++#if !defined(_WIN32) && !defined(__amigaos__)
+ // On unix based systems we should expand `~` to the users home path,
+ // otherwise on Windows we can ignore all of this. -MRC-
+ 
+@@ -656,7 +668,7 @@ bool tilde(const char *file, char *expanded) {
+ // Check user permissions on Unix based systems,
+ // or if on Windows just return. -MRC-
+ bool checkFilePermissions() {
+-#ifndef _WIN32
++#if !defined(_WIN32) && !defined(__amigaos__)
+     if (0 != setuid(getuid())) {
+         perror("Can't set permissions correctly!  Setuid call failed.\n");
+         return false;

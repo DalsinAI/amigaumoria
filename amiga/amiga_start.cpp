@@ -30,7 +30,8 @@ extern "C" {
 // a stack for the dungeon's recursion and C++'s
 unsigned long __stack = 256 * 1024;
 }
-static const char version[] = "$VER: Umoria 5.7.15 (16.11.2026)";
+static const char version[] __attribute__((used)) =
+    "$VER: Umoria 5.7.15 (16.11.2026)";
 static BPTR old_dir;
 static bool moved;
 

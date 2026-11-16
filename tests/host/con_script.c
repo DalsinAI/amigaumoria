@@ -11,6 +11,7 @@
  * is written then and the program exits; those reads wait as long as
  * they were asked to, so the game's clock goes on. The screen is kept by the same small CSI emulator as the curses
  * test (con_test.c). Copyright (c) 2026 AmiCradle Team. MIT. */
+#define _DEFAULT_SOURCE /* usleep */
 #include "con.h"
 #include <stdio.h>
 #include <stdlib.h>

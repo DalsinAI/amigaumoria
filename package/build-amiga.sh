@@ -58,7 +58,7 @@ python3 "$ROOT/tools/pack_dist.py" --dist "$DIST" --name "$NAME" --out "$OUT"
 sh "$ROOT/package/write-part.sh" "$DIST/$NAME" "$OUT/Parts/$NAME" "$NAME" "$PORT_VERSION" \
     "Umoria: the classic roguelike, down through the mines of Moria to the Balrog"
 echo "part: $(grep -c '^copy' "$OUT/Parts/$NAME/Part") files, $(du -sk "$OUT/Parts/$NAME" | cut -f1) KB"
-# Version reads this: the linker's --gc-sections must not drop it
+# Version reads this: the linker must keep it
 grep -a -q '[$]VER: ' "$DIST/$NAME/$NAME" || { echo "FAIL: no \$VER string in $NAME"; exit 1; }
 ls -l "$DIST/$NAME/$NAME"
 echo "total: $(( $(date +%s) - t0 )) s"

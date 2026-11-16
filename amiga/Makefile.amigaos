@@ -30,7 +30,10 @@ INC      = -Iamiga/curses
 CFLAGS   = -noixemul $(OPT) $(CPU) -std=gnu99 $(INC) -Wall
 CXXFLAGS = -noixemul $(OPT) $(CPU) -std=gnu++14 -D__amigaos__ $(INC) \
            -Wno-format-overflow -Wno-format-truncation
-LDFLAGS  = -noixemul $(CPU) -s -Wl,--gc-sections
+# no --gc-sections: it drops the stove's floating point set-up, and the
+# first float operation then crashes (libnix starts main() over, lab
+# t3-olui18-os323, 16 Nov 2026)
+LDFLAGS  = -noixemul $(CPU) -s
 # the stove's libstdc++ and libgcc are built with threads: they need these
 LIBS     = -lpthread -latomic
 

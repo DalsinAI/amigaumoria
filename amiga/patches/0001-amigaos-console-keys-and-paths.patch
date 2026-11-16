@@ -34,15 +34,19 @@ index 89ff6d8..07a4a4f 100644
  #else
    #include <ncurses.h>
 diff --git a/src/headers.h b/src/headers.h
-index d681dc2..0442dbb 100644
+index d681dc2..30e8cf6 100644
 --- a/src/headers.h
 +++ b/src/headers.h
-@@ -18,6 +18,11 @@
+@@ -18,6 +18,15 @@
      #include <io.h>
      #include <sys/types.h>
  
 +#elif defined(__amigaos__)
 +
++    // The C++ library first: through its threads it includes pthread.h,
++    // which wraps read() and close() in macros once unistd.h is in.
++    #include <iostream>
++    #include <string>
 +    #include <climits>
 +    #include <unistd.h>
 +

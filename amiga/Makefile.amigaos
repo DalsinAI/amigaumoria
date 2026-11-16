@@ -31,6 +31,8 @@ CFLAGS   = -noixemul $(OPT) $(CPU) -std=gnu99 $(INC) -Wall
 CXXFLAGS = -noixemul $(OPT) $(CPU) -std=gnu++14 -D__amigaos__ $(INC) \
            -Wno-format-overflow -Wno-format-truncation
 LDFLAGS  = -noixemul $(CPU)
+# the stove's libstdc++ and libgcc are built with threads: they need these
+LIBS     = -lpthread -latomic
 
 BUILD   = build/amigaos
 OBJDIR  = $(BUILD)/obj
@@ -45,7 +47,7 @@ all: $(OUT)/$(PROG) package
 
 $(OUT)/$(PROG): $(OBJS)
 	@mkdir -p $(OUT)
-	$(CXX) $(LDFLAGS) -o $@ $(OBJS)
+	$(CXX) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
 
 # upstream's main() is umoria_main: amiga/amiga_start.cpp runs first
 $(OBJDIR)/um/%.o: $(UM)/src/%.cpp $(wildcard $(UM)/src/*.h) amiga/curses/curses.h

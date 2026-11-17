@@ -1,0 +1,16 @@
+{
+  "name": "Umoria",
+  "version": "5.7.15-gfos1",
+  "drawer": "Umoria",
+  "program": "Umoria",
+  "cpu": "68040",
+  "fpu": false,
+  "space": 900000,
+  "modules": [],
+  "keep": [
+    "User"
+  ],
+  "parent": "Work:Games",
+  "badge": "icons/art/umoria.png",
+  "script": "Install-Umoria"
+}

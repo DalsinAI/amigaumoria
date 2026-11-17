@@ -1,0 +1,7 @@
+# The upstream Umoria the port builds: fetched at this commit by
+# package/build-amiga.sh, never kept in this repository.
+UM_URL=https://github.com/dungeons-of-moria/umoria
+UM_COMMIT=3bf8abc4f76812810e59d738492c7b61fb8f1bb6
+UM_VERSION=5.7.15
+UM_DATE=2021-06-02
+PORT_VERSION=5.7.15-gfos1
